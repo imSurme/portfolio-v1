@@ -248,6 +248,13 @@ body {
         transform: translateX(calc(-50% - 60px));
         margin-right: 0; /* sağ boşluğu kaldır */
     }
+
+    /* Desktop: Projeler yatay scrollbar'ını gizle (kaydırma aktif) */
+    .projects-track {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* eski IE/Edge */
+    }
+    .projects-track::-webkit-scrollbar { display: none; } /* WebKit */
 }
 
 .hero h1 {
