@@ -645,6 +645,12 @@ section h2 {
 [data-theme="dark"] .projects-arrow:hover { background: rgba(255,255,255,0.28); }
 [data-theme="dark"] .projects-dot { background: #334155; }
 
+/* Koyu tema + mobil: dots renklerini aç */
+@media (max-width: 768px) {
+  [data-theme="dark"] .projects-dot { background: #ffffff; }
+  [data-theme="dark"] .projects-dot.active { background: #bfdbfe; }
+}
+
 .project-card {
     background: var(--light-background);
     border-radius: 10px;
