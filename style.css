@@ -931,7 +931,11 @@ footer {
     .projects-track {
         grid-auto-columns: 300px;
         gap: 1rem;
+        /* Scrollbar'ı gizle (kaydırma açık kalsın) */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge eski */
     }
+    .projects-track::-webkit-scrollbar { display: none; } /* WebKit */
     .terminal {
         width: calc(100vw - 40px);
         height: 60vh;
