@@ -120,14 +120,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullText = tw.getAttribute('data-text') || tw.textContent.trim();
         tw.textContent = '';
         let i = 0;
-        const speed = 80; // ms per char
+        const baseSpeed = 110; // ms per char (daha hızlı yazım)
 
         const type = () => {
             if (i <= fullText.length) {
                 tw.textContent = fullText.slice(0, i);
                 i += 1;
                 if (i <= fullText.length) {
-                    setTimeout(type, speed);
+                    const jitter = Math.max(40, baseSpeed + (Math.random() * 60 - 30));
+                    setTimeout(type, jitter);
                 } else {
                     // Yazı tamamlandı; 2 saniye sonra imleci gizle
                     setTimeout(() => {
@@ -152,11 +153,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const scrollByAmount = () => Math.min(track.clientWidth * 0.9, 600);
 
+    const updateArrowVisibility = () => {
+        if (!leftBtn || !rightBtn) return;
+        // Mobilde oklar daima gizli kalsın (CSS'le uyumlu)
+        if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+            leftBtn.style.display = 'none';
+            rightBtn.style.display = 'none';
+            return;
+        }
+        const maxScroll = track.scrollWidth - track.clientWidth - 1; // tolerans
+        const atStart = track.scrollLeft <= 0;
+        const atEnd = track.scrollLeft >= maxScroll;
+        leftBtn.style.display = atStart ? 'none' : 'flex';
+        rightBtn.style.display = atEnd ? 'none' : 'flex';
+    };
+
     leftBtn?.addEventListener('click', () => {
         track.scrollBy({ left: -scrollByAmount(), behavior: 'smooth' });
+        updateArrowVisibility();
     });
     rightBtn?.addEventListener('click', () => {
         track.scrollBy({ left: scrollByAmount(), behavior: 'smooth' });
+        updateArrowVisibility();
     });
 
     // Mobil dots/pagination
@@ -194,11 +212,20 @@ document.addEventListener('DOMContentLoaded', () => {
         track.addEventListener('scroll', () => {
             // Scroll sonunda aktif noktayı güncelle
             window.requestAnimationFrame(updateActiveDot);
+            window.requestAnimationFrame(updateArrowVisibility);
         }, { passive: true });
 
         // İlk durum
         updateActiveDot();
     }
+
+    // İlk açılışta ok görünürlüğünü ayarla ve resize'da güncelle
+    updateArrowVisibility();
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateArrowVisibility, 150);
+    });
 });
 
 // Görseller için Lightbox (tam ekran önizleme)
