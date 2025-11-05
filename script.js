@@ -67,10 +67,12 @@ function toggleLanguage() {
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 50) {
-        navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-        navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        navbar.style.background = isDark ? 'rgba(17, 24, 39, 0.85)' : 'rgba(255, 255, 255, 0.98)';
+        navbar.style.boxShadow = isDark ? '0 2px 10px rgba(0, 0, 0, 0.4)' : '0 2px 10px rgba(0, 0, 0, 0.1)';
     } else {
-        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        navbar.style.background = isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.95)';
         navbar.style.boxShadow = 'none';
     }
 });
@@ -136,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         type();
     }
+    // Tema başlangıcı: aşağıdaki global tema yöneticisi early reflect yapıyor
 });
 
 // Projeler: yatay kaydırma (sadece oklar; sürükle-bırak devre dışı)
@@ -230,6 +233,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
     });
 });
+
+// Tema değiştirici (sun & moon toggle)
+const storageKey = 'theme-preference';
+const theme = { value: getColorPreference() };
+
+function getColorPreference() {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) return stored;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+
+function setPreference() {
+    localStorage.setItem(storageKey, theme.value);
+    reflectPreference();
+}
+
+function reflectPreference() {
+    document.documentElement.setAttribute('data-theme', theme.value);
+    document.querySelectorAll('.theme-toggle').forEach(btn => {
+        btn.setAttribute('aria-label', theme.value);
+    });
+}
+
+function onThemeToggleClick() {
+    theme.value = theme.value === 'light' ? 'dark' : 'light';
+    setPreference();
+    // Navbar arka planını yeni temaya göre güncelle
+    window.dispatchEvent(new Event('scroll'));
+}
+
+// early reflect to avoid flash
+reflectPreference();
+
+window.addEventListener('load', () => {
+    reflectPreference();
+    document.querySelectorAll('.theme-toggle').forEach(btn => {
+        btn.addEventListener('click', onThemeToggleClick);
+    });
+});
+
+// sync with system changes
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ({ matches: isDark }) => {
+        theme.value = isDark ? 'dark' : 'light';
+        setPreference();
+    });
+}
 
 // Scroll Animasyonu için Intersection Observer
 const sections = document.querySelectorAll('section:not(.hero)');

@@ -1,3 +1,50 @@
+@import url("https://unpkg.com/open-props/easings.min.css");
+/* SVG tabanlı tema toggle butonu */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 34.5px; /* dil butonuna daha yakın dikey ölçü */
+    padding: 0; /* ekstra yükseklik yaratmasın */
+    line-height: 1; /* dikey taşmayı önle */
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    margin-left: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover { background: var(--primary-color); color: #fff; }
+
+/* Icon colors */
+:root { --icon-fill: var(--primary-color); --icon-fill-hover: #ffffff; }
+[data-theme="dark"] { --icon-fill: #93c5fd; --icon-fill-hover: #ffffff; }
+
+.sun-and-moon > :is(.moon, .sun, .sun-beams) { transform-origin: center; }
+.sun-and-moon > :is(.moon, .sun) { fill: var(--icon-fill); }
+.theme-toggle:is(:hover, :focus-visible) > .sun-and-moon > :is(.moon, .sun) { fill: var(--icon-fill-hover); }
+.sun-and-moon > .sun-beams { stroke: var(--icon-fill); stroke-width: 2px; }
+.theme-toggle:is(:hover, :focus-visible) .sun-and-moon > .sun-beams { stroke: var(--icon-fill-hover); }
+
+[data-theme="dark"] .sun-and-moon > .sun { transform: scale(1.75); }
+[data-theme="dark"] .sun-and-moon > .sun-beams { opacity: 0; }
+[data-theme="dark"] .sun-and-moon > .moon > circle { transform: translateX(-7px); }
+@supports (cx: 1) {
+  [data-theme="dark"] .sun-and-moon > .moon > circle { cx: 17; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sun-and-moon > .sun { transition: transform .5s var(--ease-elastic-3); }
+  .sun-and-moon > .sun-beams { transition: transform .5s var(--ease-elastic-4), opacity .5s var(--ease-3); }
+  .sun-and-moon .moon > circle { transition: transform .25s var(--ease-out-5); }
+  @supports (cx: 1) { .sun-and-moon .moon > circle { transition: cx .25s var(--ease-out-5); } }
+  [data-theme="dark"] .sun-and-moon > .sun { transition-timing-function: var(--ease-3); transition-duration: .25s; transform: scale(1.75); }
+  [data-theme="dark"] .sun-and-moon > .sun-beams { transition-duration: .15s; transform: rotateZ(-25deg); }
+  [data-theme="dark"] .sun-and-moon > .moon > circle { transition-duration: .5s; transition-delay: .25s; }
+}
+
 :root {
     --primary-color: #2563eb;
     --secondary-color: #1e40af;
@@ -5,6 +52,16 @@
     --light-text: #6b7280;
     --background: #ffffff;
     --light-background: #f3f4f6;
+}
+
+/* Dark tema değişkenleri */
+[data-theme="dark"] {
+    --primary-color: #60a5fa;
+    --secondary-color: #3b82f6;
+    --text-color: #e5e7eb;
+    --light-text: #9ca3af;
+    --background: #0b1220;
+    --light-background: #111827;
 }
 
 * {
@@ -22,6 +79,8 @@ body {
     line-height: 1.6;
     color: var(--text-color);
     overflow-x: hidden;
+    background: var(--background);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -40,6 +99,11 @@ body {
     backdrop-filter: blur(10px);
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .navbar {
+    background: rgba(17, 24, 39, 0.7);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .navbar .container {
@@ -147,6 +211,42 @@ body {
         margin: 0;
         max-width: none;
         width: auto;
+    }
+
+    /* Desktop: Tema butonunu sayfanın en sağına sabitle */
+    .theme-toggle.desktop-theme {
+        position: fixed;
+        right: 20px;
+        z-index: 1100;
+        margin-left: 0;
+    }
+
+    /* Desktop: Navbar container tam genişlikte; logo sola yaklaşır */
+    .navbar .container {
+        max-width: 100%;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    /* Desktop: Dil butonunu tema butonunun hemen soluna sabitle */
+    .lang-btn.desktop-lang {
+        position: fixed;
+        right: 68px; /* tema butonu (40px) + aralık */
+        z-index: 1100;
+        margin: 0;
+    }
+
+    /* Desktop: nav-links tam ortada kalsın */
+    .nav-container {
+        position: relative;
+        flex: 1;
+    }
+    .nav-links {
+        position: absolute;
+        left: 50%;
+        /* Sağdaki dil+tema butonlarını dengelemek için hafif sola kaydır */
+        transform: translateX(calc(-50% - 60px));
+        margin-right: 0; /* sağ boşluğu kaldır */
     }
 }
 
@@ -277,7 +377,7 @@ section h2 {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
-    background: #f8f9fa;
+    background: var(--light-background);
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
@@ -302,7 +402,7 @@ section h2 {
 }
 
 .education-card {
-    background: white;
+    background: var(--light-background);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
@@ -361,7 +461,7 @@ section h2 {
     font-size: 1rem;
     color: var(--light-text);
     padding-left: 1rem;
-    border-left: 2px solid var(--light-background);
+    border-left: 2px solid rgba(37, 99, 235, 0.35); /* ince mavi ayraç */
 }
 
 /* Experience Section - reuse projects styles */
@@ -434,7 +534,7 @@ section h2 {
 }
 
 .skill-card {
-    background: white;
+    background: var(--light-background);
     padding: 2rem;
     border-radius: 10px;
     text-align: center;
@@ -525,8 +625,21 @@ section h2 {
     background: var(--primary-color);
 }
 
+/* Dark theme tweaks for cards and controls */
+[data-theme="dark"] .project-card {
+    background: #0f172a; /* slate-900 */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .project-card h3 { color: var(--text-color); }
+[data-theme="dark"] .project-card p { color: var(--light-text); }
+[data-theme="dark"] .project-links .btn.small { color: #93c5fd; }
+[data-theme="dark"] .project-links .btn.small:hover { color: #bfdbfe; }
+[data-theme="dark"] .projects-arrow { background: rgba(255,255,255,0.18); }
+[data-theme="dark"] .projects-arrow:hover { background: rgba(255,255,255,0.28); }
+[data-theme="dark"] .projects-dot { background: #334155; }
+
 .project-card {
-    background: #f8f9fa;
+    background: var(--light-background);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
@@ -698,6 +811,37 @@ section h2 {
     border-radius: 15px;
     font-size: 0.8rem;
     font-weight: 500;
+}
+
+/* Dark theme tweaks for info cards */
+[data-theme="dark"] .about-content,
+[data-theme="dark"] .education-card,
+[data-theme="dark"] .skill-card {
+    background: #0f172a; /* slate-900 */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .about-content p,
+[data-theme="dark"] .education-info h3,
+[data-theme="dark"] .education-program,
+[data-theme="dark"] .education-date,
+[data-theme="dark"] .education-gpa,
+[data-theme="dark"] .skill-card h3 {
+    color: var(--text-color);
+}
+[data-theme="dark"] .education-info {
+    color: var(--light-text);
+}
+[data-theme="dark"] .education-gpa {
+    border-left: 2px solid rgba(96, 165, 250, 0.5); /* açık mavi ayraç */
+}
+
+/* Dark theme: İTÜ logosu görünürlüğünü artır */
+[data-theme="dark"] .education-logo {
+    /* Koyu zeminde kontrast için renkleri ters çevir ve beyaza yakınlaştır */
+    filter: invert(1) hue-rotate(180deg) saturate(0) brightness(1.1) contrast(1.05);
+    background: transparent; /* boyutu koru */
+    border-radius: 8px;
+    padding: 0; /* görsel alanı küçültmesin */
 }
 
 /* Contact Section */
@@ -986,6 +1130,9 @@ footer {
     /* Mobilde okları gizle, dots göster */
     .projects-arrow { display: none; }
     .projects-dots { display: flex; }
+
+    /* Mobil yan menüde alt tarafta görünen (nav container içindeki) tema butonunu gizle */
+    .theme-toggle.desktop-theme { display: none; }
 }
 
 /* Nav Right */
@@ -1025,6 +1172,24 @@ footer {
     color: white;
 }
 
+/* Theme toggle butonu (lang-btn ile benzer stil) */
+.theme-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    margin-left: 0.75rem;
+    transition: all 0.3s;
+}
+
+.theme-btn:hover { background: var(--primary-color); color: #fff; }
+
 .current-lang {
     font-weight: 500;
 }
@@ -1052,6 +1217,8 @@ footer {
 @media (max-width: 768px) {
     .mobile-controls {
         display: flex;
+        align-items: center;
+        gap: 0.5rem; /* dil ve tema butonları arası daha az boşluk */
     }
 
     .desktop-lang {
@@ -1061,6 +1228,9 @@ footer {
     .mobile-lang {
         display: flex;
     }
+
+    /* Mobilde tema butonunun sol marjını azalt */
+    .theme-toggle.mobile-theme { margin-left: 0.25rem; }
 
     .hamburger-menu {
         display: flex;
@@ -1125,6 +1295,20 @@ footer {
     .nav-links a.active {
         background: var(--light-background);
         border-left: 3px solid var(--primary-color);
+    }
+
+    /* Dark theme: mobil yan menü renkleri */
+    [data-theme="dark"] .nav-container {
+        background: #111827; /* slate-800 */
+        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.6);
+    }
+    [data-theme="dark"] .nav-links a {
+        color: var(--text-color);
+    }
+    [data-theme="dark"] .nav-links a:hover,
+    [data-theme="dark"] .nav-links a.active {
+        background: #0b1220; /* page bg ile uyumlu koyu */
+        border-left-color: var(--primary-color);
     }
 
     .hero h1 {
