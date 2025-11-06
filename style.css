@@ -768,6 +768,11 @@ section h2 {
     font-size: 32px;
 }
 
+/* Material Symbols ikonu olan başlıklarda gap'i azalt */
+.project-header:has(.material-symbols-outlined) {
+    gap: 0.5rem;
+}
+
 .project-card h3 {
     margin: 0;
     font-size: 1.2rem;
