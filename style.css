@@ -1065,6 +1065,7 @@ footer {
     bottom: 0;
     background: #1a1a1a;
     padding: 5px 0;
+    flex-wrap: wrap;
 }
 
 .terminal-prompt {
@@ -1117,6 +1118,21 @@ footer {
     .terminal {
         width: calc(100vw - 40px);
         height: 60vh;
+    }
+    
+    /* Mobilde skor yazısı yanında kalsın */
+    .terminal-input-line {
+        flex-wrap: nowrap !important;
+    }
+    
+    #snake-score {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .terminal-input {
+        min-width: 0;
+        flex: 1 1 auto;
     }
 
     .about-content {

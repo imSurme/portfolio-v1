@@ -401,7 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
   skills      - Yeteneklerimi listeler
   projects    - Projelerimi listeler
   contact     - İletişim bilgilerimi gösterir
-  cv          - CV'mi indir`,
+  cv          - CV'mi indir
+  snake       - Snake oyununu başlatır`,
             about: `Merhaba! Ben İbrahim Mert Sürme.
 22 yaşındayım ve İstanbul Teknik Üniversitesi'nde Bilgisayar Mühendisliği 3. sınıf öğrencisiyim.
 Genellikle web geliştirme, veritabanları ve yapay zeka ile ilgileniyorum ve bu alanlarda projeler geliştiriyorum.`,
@@ -448,7 +449,8 @@ Genellikle web geliştirme, veritabanları ve yapay zeka ile ilgileniyorum ve bu
   skills      - List my skills
   projects    - Show my projects
   contact     - Show contact information
-  cv          - Download my CV`,
+  cv          - Download my CV
+  snake       - Start Snake game`,
             about: `Hello! I'm İbrahim Mert Sürme.
 I'm 22 years old and a 3rd-year Computer Engineering student at Istanbul Technical University.
 I'm mainly interested in web development, databases, and artificial intelligence, and I build projects in these areas.`,
@@ -487,9 +489,282 @@ I'm mainly interested in web development, databases, and artificial intelligence
         }
     };
 
+    // Snake oyunu
+    let snakeGame = null;
+    let snakeGameInterval = null;
+
+    // Oyunu tamamen temizleme fonksiyonu
+    function cleanupSnakeGame() {
+        if (snakeGameInterval) {
+            clearInterval(snakeGameInterval);
+            snakeGameInterval = null;
+        }
+        if (snakeGame && snakeGame.handleKeyPress) {
+            document.removeEventListener('keydown', snakeGame.handleKeyPress);
+        }
+        terminalInput.disabled = false;
+        
+        // Skor span'ini kaldır
+        const scoreSpan = document.getElementById('snake-score');
+        if (scoreSpan) {
+            scoreSpan.remove();
+        }
+        
+        // Canvas ve gameContainer'ı kaldır
+        const canvas = document.getElementById('snake-canvas');
+        if (canvas) {
+            const gameContainer = canvas.closest('div');
+            if (gameContainer && gameContainer.parentNode === terminalOutput) {
+                gameContainer.remove();
+            } else {
+                canvas.remove();
+            }
+        }
+        
+        snakeGame = null;
+    }
+
+    function startSnakeGame() {
+        // Eğer oyun zaten çalışıyorsa durdur
+        if (snakeGameInterval) {
+            clearInterval(snakeGameInterval);
+        }
+
+        // Terminal output'u temizle ve oyun alanını oluştur
+        terminalOutput.innerHTML = '';
+        
+        const gameContainer = document.createElement('div');
+        gameContainer.style.cssText = 'text-align: center; margin: 10px 0;';
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'snake-canvas';
+        canvas.width = 280;
+        canvas.height = 200;
+        canvas.style.cssText = 'border: 2px solid #27c93f; background: #0a0a0a; display: block; margin: 10px auto; max-width: 100%;';
+        
+        const instructions = document.createElement('div');
+        instructions.style.cssText = 'color: #999; font-size: 12px; margin: 5px 0;';
+        instructions.textContent = currentLang === 'tr' 
+            ? 'Ok tuşları ile oynayın. Oyunu durdurmak için "q" tuşuna basın.'
+            : 'Use arrow keys to play. Press "q" to quit.';
+        
+        gameContainer.appendChild(instructions);
+        gameContainer.appendChild(canvas);
+        terminalOutput.appendChild(gameContainer);
+        
+        // Skor yazısını terminal prompt'unun yanına ekle
+        const terminalPrompt = document.querySelector('.terminal-prompt');
+        let scoreSpan = document.getElementById('snake-score');
+        
+        // Eğer skor span'i yoksa oluştur
+        if (!scoreSpan) {
+            scoreSpan = document.createElement('span');
+            scoreSpan.id = 'snake-score';
+            scoreSpan.style.cssText = 'color: #27c93f; font-family: Consolas, monospace; margin-left: 10px;';
+            terminalPrompt.parentNode.insertBefore(scoreSpan, terminalPrompt.nextSibling);
+        }
+        
+        scoreSpan.textContent = currentLang === 'tr' ? 'Skor: 0' : 'Score: 0';
+
+        const ctx = canvas.getContext('2d');
+        const gridSize = 14;
+        const tileCountX = Math.floor(canvas.width / gridSize);
+        const tileCountY = Math.floor(canvas.height / gridSize);
+
+        let dx = 0;
+        let dy = 0;
+        let nextDx = 0;
+        let nextDy = 0;
+        let score = 0;
+        let snake = [{ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) }];
+        let food = { x: Math.floor(tileCountX / 2) + 3, y: Math.floor(tileCountY / 2) };
+
+        function drawGame() {
+            // Ekranı temizle
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Yemek çiz
+            ctx.fillStyle = '#ff5f56';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+            // Yılan çiz
+            ctx.fillStyle = '#27c93f';
+            snake.forEach((segment, index) => {
+                if (index === 0) {
+                    // Kafa için daha parlak renk
+                    ctx.fillStyle = '#4ade80';
+                } else {
+                    ctx.fillStyle = '#27c93f';
+                }
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            });
+        }
+
+        function moveSnake() {
+            // Yön değişikliğini uygula (her frame'de bir kez)
+            if (nextDx !== 0 || nextDy !== 0) {
+                // Ters yöne gidemez kontrolü
+                if (!(dx === -nextDx && dy === -nextDy) && !(dx === nextDx && dy === nextDy)) {
+                    dx = nextDx;
+                    dy = nextDy;
+                }
+                nextDx = 0;
+                nextDy = 0;
+            }
+            
+            // Eğer yılan henüz hareket etmemişse (dx=0, dy=0), hareket etme
+            if (dx === 0 && dy === 0) {
+                return;
+            }
+
+            let head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Wrap-around: Duvarın diğer tarafından çık
+            if (head.x < 0) {
+                head.x = tileCountX - 1;
+            } else if (head.x >= tileCountX) {
+                head.x = 0;
+            }
+            
+            if (head.y < 0) {
+                head.y = tileCountY - 1;
+            } else if (head.y >= tileCountY) {
+                head.y = 0;
+            }
+
+            // Kendine çarpma kontrolü (sadece kuyruk kısmını kontrol et, kafayı hariç tut)
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    endGame();
+                    return;
+                }
+            }
+
+            snake.unshift(head);
+
+            // Yemek yeme kontrolü
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                const scoreSpan = document.getElementById('snake-score');
+                if (scoreSpan) {
+                    scoreSpan.textContent = currentLang === 'tr' ? `Skor: ${score}` : `Score: ${score}`;
+                }
+                generateFood();
+            } else {
+                snake.pop();
+            }
+
+            drawGame();
+        }
+
+        function generateFood() {
+            food.x = Math.floor(Math.random() * tileCountX);
+            food.y = Math.floor(Math.random() * tileCountY);
+            
+            // Yemek yılanın üzerinde olmamalı
+            for (let segment of snake) {
+                if (food.x === segment.x && food.y === segment.y) {
+                    generateFood();
+                    return;
+                }
+            }
+        }
+
+        function endGame() {
+            clearInterval(snakeGameInterval);
+            snakeGameInterval = null;
+            
+            // Event listener'ı kaldır
+            if (snakeGame && snakeGame.handleKeyPress) {
+                document.removeEventListener('keydown', handleKeyPress);
+            }
+            
+            // Skor span'ini kaldır
+            const scoreSpan = document.getElementById('snake-score');
+            if (scoreSpan) {
+                scoreSpan.remove();
+            }
+            
+            // Terminal çıktısı olarak game over mesajı
+            const gameOverOutput = document.createElement('div');
+            gameOverOutput.style.cssText = 'margin-top: 10px;';
+            gameOverOutput.innerHTML = `<span class="terminal-prompt">guest@portfolio:~$</span> <span style="color: #ff5f56;">${currentLang === 'tr' ? `Oyun Bitti! Final Skoru: ${score}` : `Game Over! Final Score: ${score}`}</span>`;
+            
+            terminalOutput.appendChild(gameOverOutput);
+            
+            // Input'u tekrar aktif et
+            terminalInput.disabled = false;
+            terminalInput.focus();
+            
+            // En alta kaydır
+            setTimeout(() => {
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }, 0);
+        }
+
+        // Klavye kontrolleri
+        const handleKeyPress = (e) => {
+            if (!snakeGameInterval) return;
+
+            if (e.key === 'q' || e.key === 'Q') {
+                e.preventDefault(); // Terminal input'una yazılmasını engelle
+                endGame();
+                return;
+            }
+
+            // Yön değiştirme (nextDirection'a kaydet, ters yöne gidemez)
+            // Mevcut yönü veya bekleyen yönü kontrol et
+            const currentDy = nextDy !== 0 ? nextDy : dy;
+            const currentDx = nextDx !== 0 ? nextDx : dx;
+            
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentDy !== 1) { // Aşağıdan yukarıya geçiş yapabilir
+                    nextDx = 0;
+                    nextDy = -1;
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (currentDy !== -1) { // Yukarıdan aşağıya geçiş yapabilir
+                    nextDx = 0;
+                    nextDy = 1;
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentDx !== 1) { // Sağdan sola geçiş yapabilir
+                    nextDx = -1;
+                    nextDy = 0;
+                }
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (currentDx !== -1) { // Soldan sağa geçiş yapabilir
+                    nextDx = 1;
+                    nextDy = 0;
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyPress);
+        snakeGame = { handleKeyPress, endGame };
+
+        // Oyunu başlat
+        drawGame();
+        snakeGameInterval = setInterval(moveSnake, 150);
+        
+        // Input'u geçici olarak devre dışı bırak
+        terminalInput.disabled = true;
+        
+        return currentLang === 'tr' 
+            ? 'Snake oyunu başlatıldı! Ok tuşları ile oynayın, "q" ile çıkın.'
+            : 'Snake game started! Use arrow keys to play, press "q" to quit.';
+    }
+
     const commands = {
         help: () => terminalTexts[currentLang].help,
         clear: () => {
+            // Oyun çalışıyorsa tamamen temizle
+            cleanupSnakeGame();
             terminalOutput.innerHTML = '';
             return '';
         },
@@ -500,6 +775,7 @@ I'm mainly interested in web development, databases, and artificial intelligence
             link.click();
             return terminalTexts[currentLang].cvDownloading;
         },
+        snake: () => startSnakeGame(),
         about: () => terminalTexts[currentLang].about,
         education: () => terminalTexts[currentLang].education,
         experience: () => terminalTexts[currentLang].experience,
@@ -511,6 +787,8 @@ I'm mainly interested in web development, databases, and artificial intelligence
     // Terminal toggle
     terminalToggle.addEventListener('click', () => {
         if (terminal.classList.contains('active')) {
+            // Oyun çalışıyorsa tamamen temizle
+            cleanupSnakeGame();
             terminal.classList.add('closing');
             setTimeout(() => {
                 terminal.classList.remove('active');
@@ -519,6 +797,13 @@ I'm mainly interested in web development, databases, and artificial intelligence
         } else {
             terminal.classList.toggle('active');
             terminalInput.focus();
+            
+            // Terminal açıldığında oyun canvas'ı varsa temizle
+            const canvas = document.getElementById('snake-canvas');
+            if (canvas) {
+                cleanupSnakeGame();
+                terminalOutput.innerHTML = '';
+            }
             
             // İlk açılışta karşılama mesajı göster
             if (!terminalOutput.innerHTML) {
@@ -560,6 +845,8 @@ Type "help" to see available commands.`
 
     // Kapatma butonu
     closeButton.addEventListener('click', () => {
+        // Oyun çalışıyorsa tamamen temizle
+        cleanupSnakeGame();
         terminal.classList.add('closing');
         setTimeout(() => {
             terminal.classList.remove('active');
@@ -614,6 +901,8 @@ Type "help" to see available commands.`
         if (terminal.classList.contains('active') && 
             !terminal.contains(e.target) && 
             !terminalToggle.contains(e.target)) {
+            // Oyun çalışıyorsa tamamen temizle
+            cleanupSnakeGame();
             terminal.classList.add('closing');
             setTimeout(() => {
                 terminal.classList.remove('active');
